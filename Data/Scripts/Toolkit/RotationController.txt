@@ -1,0 +1,58 @@
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: Rotation Controller
+// Script Author: De Gezonde Roker
+// ----------------------------------
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	temp6 = object.propertyValue
+	temp6 &= 0b11110000
+	temp6 >>= 4
+	
+	if object.direction == FLIP_X
+		FlipSign(temp6)
+	end if
+	
+	object.rotation += temp6
+	object.rotation %= 512
+	
+	temp7 = 0
+	temp6 = object.propertyValue
+	temp6 &= 0b00001111
+	temp6++
+
+	arrayPos0 = object.entityPos
+	arrayPos0++
+	while temp7 < temp6
+		temp0 = object.rotation
+		temp0 += 512
+		temp1 = 512
+		temp1 /= temp6
+		temp1 *= temp7
+		temp0 += temp1
+	
+		Cos(temp2, temp0)
+		Sin(temp3, temp0)
+		temp2 *= object.scale
+		temp3 *= object.scale
+		object[arrayPos0].xpos = object.xpos
+		object[arrayPos0].xpos += temp2
+		object[arrayPos0].ypos = object.ypos
+		object[arrayPos0].ypos += temp3
+		
+		temp7++
+		arrayPos0++
+	loop
+end event
+
+
+event ObjectDraw
+end event
+
+
+event ObjectStartup
+end event

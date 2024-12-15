@@ -1,0 +1,66 @@
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: Left Right Controller
+// Script Author: De Gezonde Roker
+// ----------------------------------
+
+// ========================
+// Events
+// ========================
+
+// This is in fact just a Rotation Controller but without the y-component
+
+event ObjectUpdate
+	temp6 = object.propertyValue
+	temp6 &= 0b11110000
+	temp6 >>= 4
+	
+	object.rotation += temp6
+	object.rotation %= 512
+	
+	temp7 = 0
+	temp6 = object.propertyValue
+	temp6 &= 0b00001111
+	temp6++
+
+	arrayPos0 = object.entityPos
+	arrayPos0++
+	while temp7 < temp6
+		temp0 = object.rotation
+		temp0 += 512
+		
+		Cos(temp2, temp0)
+		temp2 *= object.scale
+		
+		temp1 = temp7
+		temp1 *= 24
+		temp1 <<= 16
+		temp2 += temp1
+		
+		temp1 = temp6
+		temp1 --
+		temp1 *= 12
+		temp1 <<= 16
+		temp2 -= temp1
+		
+		object[arrayPos0].xpos = object.xpos
+		object[arrayPos0].xpos += temp2
+		object[arrayPos0].ypos = object.ypos
+		
+		temp7++
+		arrayPos0++
+	loop
+end event
+
+
+event ObjectDraw
+end event
+
+
+event ObjectStartup
+	foreach (TypeName[Left Right Controller], arrayPos0, ALL_ENTITIES)
+		if object[arrayPos0].direction == FLIP_X
+			object[arrayPos0].rotation = 256
+		end if
+	next
+end event

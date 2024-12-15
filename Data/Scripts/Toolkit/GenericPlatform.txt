@@ -1,0 +1,94 @@
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: Generic Platform Object
+// Script Author: De Gezonde Roker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.prevXpos
+private alias object.value1 : object.prevYpos
+private alias object.value2 : object.stoodPlayers
+
+private alias object.xpos : player.xpos
+private alias object.ypos : player.ypos
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	temp0 = object.propertyValue
+	temp0 += 2
+	temp0 *= 8
+	
+	temp1 = temp0
+	FlipSign(temp1)
+	
+	temp7 = object.prevXpos
+	temp7 &= 0xFFFF0000
+	temp5 = object.xpos
+	temp5 &= 0xFFFF0000
+	temp5 -= temp7
+	
+	temp7 = object.prevYpos
+	temp7 &= 0xFFFF0000
+	temp6 = object.ypos
+	temp6 &= 0xFFFF0000
+	temp6 -= temp7
+	
+	foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+		GetBit(temp2, object.stoodPlayers, currentPlayer)
+		if temp2 == true
+			player[currentPlayer].xpos += temp5
+			player[currentPlayer].ypos += temp6
+		end if
+		
+		SetBit(object.stoodPlayers, currentPlayer, false)
+		BoxCollisionTest(C_PLATFORM, object.entityPos, temp1, -8, temp0, 8, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+		if checkResult == true
+			SetBit(object.stoodPlayers, currentPlayer, true)
+		end if
+	next
+	
+	object.prevXpos = object.xpos
+	object.prevYpos = object.ypos
+end event
+
+
+event ObjectDraw
+	temp7 = 0
+	
+	temp0 = object.propertyValue
+	temp0 += 1
+	
+	temp0 *= 16
+	temp0 <<= 16
+	temp0 /= 2
+	
+	temp1 = object.xpos
+	temp1 -= temp0
+	DrawSpriteXY(0, temp1, object.ypos)
+	
+	while temp7 < object.propertyValue
+		temp1 += 0x100000
+		DrawSpriteXY(1, temp1, object.ypos)
+		temp7++
+	loop
+	
+	temp1 += 0x100000
+	DrawSpriteXY(2, temp1, object.ypos)
+	
+	//DrawSprite(0)
+end event
+
+
+event ObjectStartup
+	// Please change the sprites for these, the default ones included here are absolutely hideous
+	LoadSpriteSheet("Toolkit/Objects.gif")
+	SpriteFrame(-8, -8, 16, 16, 1, 159)		// Left end
+	SpriteFrame(-8, -8, 16, 16, 17, 159)	// Middle
+	SpriteFrame(-8, -8, 16, 16, 33, 159)	// Right end
+end event

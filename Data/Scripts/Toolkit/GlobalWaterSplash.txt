@@ -1,0 +1,42 @@
+// ----------------------------------
+// RSDK Project: Sonic 1
+// Script Description: Water Splash Object
+// Script Author: Christian Whitehead/Simon Thomley
+// Unpacked by Rubberduckycooly's script unpacker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.timer
+
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	object.timer++
+	if object.timer > 5
+		object.timer = 0
+		object.frame++
+		if object.frame > 2
+			object.type = TypeName[Blank Object]
+		end if
+	end if
+end event
+
+
+event ObjectDraw
+	DrawSprite(object.frame)
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Toolkit/Objects.gif")
+	
+	SpriteFrame(-10, -12, 20, 12, 1, 49)
+	SpriteFrame(-15, -30, 30, 30, 1, 18)
+	SpriteFrame(-16, -32, 32, 32, 221, 22)
+end event
