@@ -1,0 +1,436 @@
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: S3 Special Ring Object
+// Script Author: De Gezonde Roker, partially based on S1 Special Ring script
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias 0 : SPECIALRING_FLOATING
+private alias 1 : SPECIALRING_DISAPPEARING
+private alias 2 : SPECIALRING_LOADSS
+
+private alias object.value0 			: object.timer
+private alias object.value1 			: object.loadStored
+private alias object.value2 			: object.stage.minutes
+private alias object.value3 			: object.stage.seconds
+private alias object.value4 			: object.stage.milliSeconds
+private alias object.value5 			: object.stage.oscillation
+private alias object.value6 			: object.stage.newYBoundary2
+private alias object.value7 			: object.stage.deathBoundary
+
+private alias object.value10 			: object.player.rings
+private alias object.value11 			: object.player.shield
+private alias object.value12 			: object.player.hyperRingActive
+
+private alias object.propertyValue 		: object.ringId
+
+// Player Aliases
+
+private alias object.value0 		: player.rings
+private alias object.value37 		: player.shield
+private alias object.value43 		: player.hyperRingActive
+
+private alias object.xpos 			: player.xpos
+private alias object.ypos 			: player.ypos
+private alias object.type 			: player.type
+private alias object.direction 		: player.direction
+private alias object.controlMode 	: player.controlMode
+private alias object.jumpPress 		: player.jumpPress
+private alias object.jumpHold 		: player.jumpHold
+private alias object.up 			: player.up
+private alias object.down 			: player.down
+private alias object.left 			: player.left
+private alias object.right 			: player.right
+private alias object.value16 		: player.isSidekick
+
+// Game Modes Aliases
+private alias 1 : MODE_SAVEGAME
+
+reserve function SpecialRing_LoadStage
+
+// ========================
+// Functions
+// ========================
+
+public function SpecialRing_LoadStage
+	fadeColor = 208
+	fadeColor <<= 16
+	temp0 = 255
+	temp0 <<= 8
+	fadeColor += temp0
+	fadeColor += 224
+	object.timer = 0
+
+	specialStage.nextZone = stage.listPos
+	stage.listPos = specialStage.listPos
+	stage.activeList = SPECIAL_STAGE
+	
+	if options.gameMode == MODE_SAVEGAME
+		ReadSaveRam()
+		temp0 = object.ringId
+		temp0 /= 32
+		temp1 = temp0
+		temp1 *= 32
+		temp2 = object.ringId
+		temp2 -= temp1
+		
+		arrayPos1 = options.saveSlot
+		arrayPos1 <<= 4
+		arrayPos1 += 0xF8
+		arrayPos1 += temp0
+		
+		temp3 = saveRAM[arrayPos1]
+		SetBit(temp3, temp2, true)
+		saveRAM[arrayPos1] = temp3
+		
+		switch temp0 
+		case 0
+			CollectedSpecialRings1 = temp3
+			break
+		case 1
+			CollectedSpecialRings2 = temp3
+			break
+		case 2
+			CollectedSpecialRings3 = temp3
+			break
+		case 3
+			CollectedSpecialRings4 = temp3
+			break
+		end switch
+		WriteSaveRam()
+	else
+		temp0 = object.ringId
+		temp0 /= 32
+		temp1 = temp0
+		temp1 *= 32
+		temp2 = object.ringId
+		temp2 -= temp1
+		switch temp0 
+		case 0
+			SetBit(CollectedSpecialRings1, temp2, true)
+			break
+		case 1
+			SetBit(CollectedSpecialRings2, temp2, true)
+			break
+		case 2
+			SetBit(CollectedSpecialRings3, temp2, true)
+			break
+		case 3
+			SetBit(CollectedSpecialRings4, temp2, true)
+			break
+		end switch
+	end if
+	
+	loadStored = true
+	object.loadStored = true
+	object.stage.minutes = stage.minutes
+	object.stage.seconds = stage.seconds
+	object.stage.milliSeconds = stage.milliSeconds
+	object.stage.oscillation = oscillation
+	object.stage.newYBoundary2 = stage.newYBoundary2
+	object.stage.deathBoundary = stage.deathBoundary
+	CopyObject(1218, 34, 1166)
+
+	temp0 = engine.trialMode
+	if stage.listPos >= stage.listSize
+		temp0 = true
+	end if
+	
+	if temp0 == false
+		LoadStage()
+	else
+		// Invalid Stage, Go back to the title screen
+		stage.activeList = PRESENTATION_STAGE
+		stage.listPos = 0
+		LoadStage()
+	end if
+end function
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	switch object.state
+	case SPECIALRING_FLOATING
+		// Did P1 collide with the special ring?
+		BoxCollisionTest(C_TOUCH, object.entityPos, -16, -16, 16, 16, 0, C_BOX, C_BOX, C_BOX, C_BOX)
+		if checkResult == true
+			stage.timeEnabled = false
+
+			// Back up player info
+			object.player.shield = player[0].shield
+			object.player.rings = player[0].rings
+			object.player.hyperRingActive = player[0].hyperRingActive
+
+			// Make P1 and their shield "disappear"
+			player[0].type = TypeName[Blank Object]
+			object[playerCount].type = TypeName[Blank Object]
+			player[0].controlMode = CONTROLMODE_NONE
+			player[0].direction = FACING_RIGHT
+
+			ResetObjectEntity(4, TypeName[Blank Object], 0, 0, 0)
+			object.drawOrder = 4
+			object.state = SPECIALRING_DISAPPEARING
+			object.frame = 32
+
+			StopSfx(SfxName[Flying])
+			StopSfx(SfxName[Tired])
+			PlaySfx(SfxName[Special Ring], false)
+
+			player[0].left = false
+			player[0].right = false
+
+			if stage.player2Enabled == true
+				if player[1].isSidekick == true
+					player[1].controlMode = CONTROLMODE_NONE
+					player[1].up = false
+					player[1].down = false
+					player[1].left = false
+					player[1].right = false
+					player[1].jumpPress = false
+					player[1].jumpHold = false
+				end if
+			end if
+		end if
+		break
+		
+	case SPECIALRING_DISAPPEARING
+		object.timer++
+		if object.timer >= 30
+			object.state = SPECIALRING_LOADSS
+			object.timer = 0
+			PlaySfx(SfxName[Warp], false)
+		end if
+		break
+		
+	case SPECIALRING_LOADSS
+		object.timer += 8
+		SetScreenFade(208, 255, 224, object.timer)
+		if object.timer >= 0x400
+			CallFunction(SpecialRing_LoadStage)
+		end if
+		break
+	end switch
+	
+	temp0 = object.ixpos
+	temp0 -= camera[0].xpos
+	Abs(temp0)
+	
+	if temp0 > 240
+		object.scale = 0x40
+		object.frame = 0
+	else
+		if object.scale < 0x200
+			object.scale += 0x08
+			if object.scale < 0x180
+				object.scale += 0x08
+			end if
+		end if
+	end if
+	
+end event
+
+
+event ObjectDraw
+	switch object.state
+	case SPECIALRING_FLOATING
+		temp0 = object.frame
+		temp0 >>= 2
+		if temp0 > 3
+			object.direction = FLIP_X
+		else
+			object.direction = FLIP_NONE
+		end if
+		
+		DrawSpriteFX(temp0, FX_SCALE, object.xpos, object.ypos)
+
+		object.frame++
+		if object.frame > 31
+			object.frame = 0
+		end if
+		break
+
+	case SPECIALRING_DISAPPEARING
+		// Determine whether to flip the sprite or not based on current frame
+		temp0 = object.frame
+		temp0 >>= 2
+		if temp0 > 11
+			object.direction = FLIP_X
+		else
+			object.direction = FLIP_NONE
+		end if
+
+		// Draw the sprite
+		DrawSpriteFX(temp0, FX_FLIP, object.xpos, object.ypos)
+
+		if temp0 == 11
+			object.direction = FLIP_X
+			DrawSpriteFX(temp0, FX_FLIP, object.xpos, object.ypos)
+		else
+			if temp0 == 15
+				object.direction = FLIP_X
+				DrawSpriteFX(temp0, FX_FLIP, object.xpos, object.ypos)
+			end if
+		end if
+
+		object.frame++
+		if object.frame > 63 // Time to disappear?
+			object.drawOrder = 0
+		end if
+		break
+		
+	end switch
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Toolkit/Objects2.gif")
+	
+	if loadStored == true
+		arrayPos0 = 1219	// Starting index of stage backup
+		temp7 = arrayPos0
+		temp7 += 1166		// Object count
+		arrayPos1 = 35
+		
+		while arrayPos0 <= temp7
+			CheckEqual(object[arrayPos0].type, TypeName[S3 Special Ring])	// Perhaps most important, the special rings themselves, as they store information as well (time, player info..)
+			temp0 = checkResult
+			CheckEqual(object[arrayPos0].type, TypeName[Blank Object])			// Any despawned object is saved	(this includes rings, badniks..)
+			temp0 |= checkResult
+			CheckEqual(object[arrayPos0].type, TypeName[Broken Monitor])		// Broken monitors are saved
+			temp0 |= checkResult
+			CheckEqual(object[arrayPos0].type, TypeName[Ring Sparkle])			// Ring sparkles too, just for good measure
+			temp0 |= checkResult
+			
+			if temp0 == true
+				CopyObject(arrayPos1, arrayPos0, 1)
+			end if
+			
+			ResetObjectEntity(arrayPos0, 0, 0, 0, 0)		// Clear the entire storage, just in case
+			
+			arrayPos0++
+			arrayPos1++
+		loop
+		loadStored = false
+	end if
+
+	if options.gameMode == MODE_SAVEGAME
+		ReadSaveRam()
+		arrayPos1 = options.saveSlot
+		arrayPos1 <<= 4
+		arrayPos1 += 0xF8
+		CollectedSpecialRings1 = saveRAM[arrayPos1]
+		arrayPos1++
+		CollectedSpecialRings2 = saveRAM[arrayPos1]
+		arrayPos1++
+		CollectedSpecialRings3 = saveRAM[arrayPos1]
+		arrayPos1++
+		CollectedSpecialRings4 = saveRAM[arrayPos1]
+	end if
+	
+	foreach (TypeName[S3 Special Ring], arrayPos1, ALL_ENTITIES)
+		object[arrayPos1].state = 0
+	
+		if object[arrayPos1].loadStored == true
+			stage.minutes = object[arrayPos1].stage.minutes 
+			stage.seconds = object[arrayPos1].stage.seconds
+			stage.milliSeconds = object[arrayPos1].stage.milliSeconds
+			stage.newYBoundary2 = object[arrayPos1].stage.newYBoundary2
+			stage.deathBoundary = object[arrayPos1].stage.deathBoundary
+			
+			camera[0].xpos = object[arrayPos1].ixpos
+			camera[0].ypos = object[arrayPos1].iypos
+			player[0].xpos = object[arrayPos1].xpos
+			player[0].ypos = object[arrayPos1].ypos
+			player[1].xpos = object[arrayPos1].xpos
+			player[1].ypos = object[arrayPos1].ypos
+			player[1].xpos -= 0x200000
+			
+			player[0].shield = object[arrayPos1].player.shield
+			player[0].rings = object[arrayPos1].player.rings
+			player[0].hyperRingActive = object[arrayPos1].player.hyperRingActive
+			
+			currentPlayer = 0
+			arrayPos0 = playerCount
+			arrayPos0 += currentPlayer
+			CallFunction(Player_ApplyShield)
+			
+			object[arrayPos1].loadStored = false
+		end if
+	
+		object[arrayPos1].ringId &= 0b00001111
+	
+		temp0 = object[arrayPos1].ringId
+		temp0 /= 32
+		temp2 = temp0
+		temp2 *= 32
+		temp1 = object[arrayPos1].ringId
+		temp1 -= temp2
+		
+		switch temp0 
+		case 0
+			temp2 = 1
+			temp2 <<= temp1
+			temp2 &= CollectedSpecialRings1
+			temp2 >>= temp1
+			break
+		case 1
+			GetBit(temp2, CollectedSpecialRings2, temp1)
+			break
+		case 2
+			GetBit(temp2, CollectedSpecialRings3, temp1)
+			break
+		case 3
+			GetBit(temp2, CollectedSpecialRings4, temp1)
+			break
+		end switch
+
+		if temp2 == true
+			object[arrayPos1].type = TypeName[Blank Object]
+		end if
+	next
+
+	// Sprite frames
+
+	// Special Ring Spinning - #0-7
+	SpriteFrame(-32, -32, 64, 64, 83, 1)
+	SpriteFrame(-28, -32, 56, 64, 199, 131)
+	SpriteFrame(-24, -32, 48, 64, 148, 1)
+	SpriteFrame(-16, -32, 32, 64, 223, 66)
+	SpriteFrame(-12, -32, 24, 64, 197, 1)
+	SpriteFrame(-16, -32, 32, 64, 223, 66)
+	SpriteFrame(-24, -32, 48, 64, 148, 1)
+	SpriteFrame(-28, -32, 56, 64, 199, 131)
+
+	// Special Ring Warping - #8-15
+	SpriteFrame(0, -32, 32, 64, 222, 1)
+	SpriteFrame(-16, -32, 48, 64, 101, 66)
+	SpriteFrame(-24, -32, 56, 64, 150, 66)
+	SpriteFrame(0, -32, 32, 64, 156, 131)
+	SpriteFrame(-24, -32, 56, 64, 150, 66)
+	SpriteFrame(-16, -32, 48, 64, 101, 66)
+	SpriteFrame(0, -32, 32, 64, 222, 1)
+	SpriteFrame(-32, -32, 32, 64, 124, 131)
+end event
+
+
+// ========================
+// Editor Events
+// ========================
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Display.gif")
+	SpriteFrame(-32, -32, 64, 64, 48, 256)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event
+	

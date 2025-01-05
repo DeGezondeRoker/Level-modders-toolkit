@@ -1,0 +1,201 @@
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: Swinging Bar Horizontal
+// Script Author: De Gezonde Roker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value2 : object.hangingPlayers
+
+private alias object.xpos : player.xpos
+private alias object.ypos : player.ypos
+private alias object.speed : player.speed
+private alias object.xvel : player.xvel
+private alias object.yvel : player.yvel
+private alias object.state : player.state
+private alias object.animation : player.animation
+private alias object.prevAnimation : player.prevAnimation
+private alias object.animationSpeed : player.animationSpeed
+private alias object.animationTimer : player.animationTimer
+private alias object.direction : player.direction
+private alias object.frame : player.frame
+private alias object.left : player.left
+private alias object.right : player.right
+private alias object.gravity : player.gravity
+private alias object.value1  : player.timer
+private alias object.jumpPress 	: player.jumpPress
+private alias object.rotation 	: player.rotation
+
+public value ANI_POLE_SWING = 0
+public value ANI_SHIMMY_IDLE = 0
+public value ANI_SHIMMY_MOVE = 0
+
+// ========================
+// Tables
+// ========================
+
+public table SwingingBar_PlayerTimers
+	0,	0,	0,	0
+end table
+
+public table SwingingBar_PlayerDirections
+	0,	0,	0,	0
+end table
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+		GetTableValue(temp0, currentPlayer, SwingingBar_PlayerTimers)
+		if temp0 != 0
+			GetBit(temp2, object.hangingPlayers, currentPlayer)
+			if temp2 == true
+				GetTableValue(temp0, currentPlayer, SwingingBar_PlayerTimers)
+				if temp0 >= 24
+					player[currentPlayer].state = Player_State_Air
+					
+					GetTableValue(temp0, currentPlayer, SwingingBar_PlayerDirections)
+					if temp0 == 1
+						temp1 = player[currentPlayer].yvel
+						temp1 >>= 1
+						player[currentPlayer].yvel += temp1
+					else
+						// No change to yvel
+					end if
+					
+					player[currentPlayer].timer = 0
+					player[currentPlayer].gravity = GRAVITY_AIR
+					player[currentPlayer].animation = ANI_BOUNCING
+					SetTableValue(0, currentPlayer, SwingingBar_PlayerTimers)
+				else
+					if temp0 > 0
+						temp0++
+						SetTableValue(temp0, currentPlayer, SwingingBar_PlayerTimers)
+						player[currentPlayer].animation = ANI_POLE_SWING
+					else
+						player[currentPlayer].animation = ANI_SHIMMY_IDLE
+					end if
+					
+					player[currentPlayer].state = Player_State_Static
+					player[currentPlayer].xvel = 0
+					player[currentPlayer].speed = 0
+					player[currentPlayer].ypos = object.ypos
+					
+					temp0 = player[currentPlayer].xpos
+					temp0 -= object.xpos
+					temp0 >>= 16
+					
+					if temp0 < 22
+						if player[currentPlayer].right == true
+							player[currentPlayer].xpos += 0x10000
+							if player[currentPlayer].animation == ANI_SHIMMY_IDLE
+								player[currentPlayer].animation = ANI_SHIMMY_MOVE
+							end if
+							player[currentPlayer].direction = 0
+						end if
+					end if
+					FlipSign(temp0)
+					if temp0 < 22
+						if player[currentPlayer].left == true
+							player[currentPlayer].xpos -= 0x10000
+							if player[currentPlayer].animation == ANI_SHIMMY_IDLE
+								player[currentPlayer].animation = ANI_SHIMMY_MOVE
+							end if
+							player[currentPlayer].direction = FLIP_X
+						end if
+					end if
+					
+					if player[currentPlayer].jumpPress == true
+						player[currentPlayer].state = Player_State_Air
+						player[currentPlayer].yvel = -0x50000
+						player[currentPlayer].timer = 0
+						player[currentPlayer].gravity = GRAVITY_AIR
+						player[currentPlayer].animation = ANI_JUMPING
+						SetTableValue(0, currentPlayer, SwingingBar_PlayerTimers)
+					end if
+				end if
+			end if
+		else
+			BoxCollisionTest(C_TOUCH, object.entityPos, -32, -4, 32, 4, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+			if checkResult == true
+				GetBit(temp2, object.hangingPlayers, currentPlayer)
+				if temp2 == false
+					checkEqual(player[currentPlayer].state, Player_State_Air)
+					temp0 = checkResult
+					checkEqual(player[currentPlayer].state, Player_State_Air_NoDropDash)
+					temp0 |= checkResult
+					if temp0 == true
+						SetBit(object.hangingPlayers, currentPlayer, true)
+						
+						temp0 = player[currentPlayer].yvel
+						Abs(temp0)
+						if temp0 <= 0x38000
+							SetTableValue(-2, currentPlayer, SwingingBar_PlayerTimers)
+						else
+							SetTableValue(1, currentPlayer, SwingingBar_PlayerTimers)
+							player[currentPlayer].rotation = 0
+							if player[currentPlayer].yvel < 0
+								SetTableValue(1, currentPlayer, SwingingBar_PlayerDirections)
+								player[currentPlayer].animation = ANI_POLE_SWING
+								player[currentPlayer].prevAnimation = ANI_POLE_SWING
+								player[currentPlayer].frame = 4
+								player[currentPlayer].animationTimer = 0
+								player[currentPlayer].animationSpeed = 255
+							else
+								SetTableValue(-1, currentPlayer, SwingingBar_PlayerDirections)
+								player[currentPlayer].animation = ANI_POLE_SWING
+								player[currentPlayer].prevAnimation = ANI_POLE_SWING
+								player[currentPlayer].frame = 16
+								player[currentPlayer].animationTimer = 0
+								player[currentPlayer].animationSpeed = 255
+							end if
+						end if
+						
+						PlaySfx(SfxName[Catch], false)
+						
+						player[currentPlayer].ypos = object.ypos
+						player[currentPlayer].xvel = 0
+						player[currentPlayer].speed = 0
+						//player[currentPlayer].yvel = 0
+							
+						temp0 = player[currentPlayer].xpos
+						temp0 -= object.xpos
+						temp0 >>= 16
+						
+						if temp0 >= 22
+							temp0 = 22
+							temp0 <<= 16
+							player[currentPlayer].xpos = object.xpos
+							player[currentPlayer].xpos += temp0
+						else
+							if temp0 < -22
+								temp0 = -22
+								temp0 <<= 16
+								player[currentPlayer].xpos = object.xpos
+								player[currentPlayer].xpos -= temp0
+							end if
+						end if
+					end if
+				end if
+			else
+				SetBit(object.hangingPlayers, currentPlayer, false)
+			end if
+		end if
+	next
+end event
+
+
+event ObjectDraw
+	DrawSpriteFX(0, FX_FLIP, object.xpos, object.ypos)
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Toolkit/Objects.gif")
+	SpriteFrame(-32, -3, 64, 8, 1, 241)
+end event

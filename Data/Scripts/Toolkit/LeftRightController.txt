@@ -5,6 +5,12 @@
 // ----------------------------------
 
 // ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.attachedObjects
+
+// ========================
 // Events
 // ========================
 
@@ -26,27 +32,37 @@ event ObjectUpdate
 	arrayPos0 = object.entityPos
 	arrayPos0++
 	while temp7 < temp6
-		temp0 = object.rotation
-		temp0 += 512
-		
-		Cos(temp2, temp0)
-		temp2 *= object.scale
-		
-		temp1 = temp7
-		temp1 *= 24
-		temp1 <<= 16
-		temp2 += temp1
-		
-		temp1 = temp6
-		temp1 --
-		temp1 *= 12
-		temp1 <<= 16
-		temp2 -= temp1
-		
-		object[arrayPos0].xpos = object.xpos
-		object[arrayPos0].xpos += temp2
-		object[arrayPos0].ypos = object.ypos
-		
+		GetBit(temp3, object.attachedObjects, temp7)
+		if temp3 == true
+			CheckNotEqual(object[arrayPos0].xvel, 0)
+			temp3 = checkResult
+			CheckNotEqual(object[arrayPos0].yvel, 0)
+			temp3 |= checkResult
+			if checkResult == true
+				SetBit(object.attachedObjects, temp7, false)		// Detach objects if their velocity is not zero (particularly important for rings that are attracted to the player)
+			else
+				temp0 = object.rotation
+				temp0 += 512
+				
+				Cos(temp2, temp0)
+				temp2 *= object.scale
+				
+				temp1 = temp7
+				temp1 *= 24
+				temp1 <<= 16
+				temp2 += temp1
+				
+				temp1 = temp6
+				temp1 --
+				temp1 *= 12
+				temp1 <<= 16
+				temp2 -= temp1
+				
+				object[arrayPos0].xpos = object.xpos
+				object[arrayPos0].xpos += temp2
+				object[arrayPos0].ypos = object.ypos
+			end if
+		end if
 		temp7++
 		arrayPos0++
 	loop
@@ -62,5 +78,6 @@ event ObjectStartup
 		if object[arrayPos0].direction == FLIP_X
 			object[arrayPos0].rotation = 256
 		end if
+		object[arrayPos0].attachedObjects = 0xFFFFFFFF
 	next
 end event

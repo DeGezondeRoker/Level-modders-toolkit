@@ -1,0 +1,158 @@
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: Starting Action
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+// Player Aliases
+private alias object.value0 : object.timer
+private alias object.value1 : object.cameraxLock
+
+private alias object.type : player.type
+private alias object.state : player.state
+private alias object.xpos : player.xpos
+private alias object.ypos : player.ypos
+private alias object.ixpos : player.ixpos
+private alias object.iypos : player.iypos
+private alias object.xvel : player.xvel
+private alias object.yvel : player.yvel
+private alias object.speed : player.speed
+private alias object.animation : player.animation
+private alias object.prevAnimation : player.prevAnimation
+private alias object.controlMode : player.controlMode
+private alias object.right : player.right
+
+private alias object.value10 : player.animationReserve
+private alias object.value11 : player.scrollDelay
+
+private alias 0 : ACTION_NOTHING
+private alias 1 : ACTION_FALL
+private alias 2 : ACTION_FALL_ROLL
+private alias 3 : ACTION_WALK
+private alias 4 : ACTION_RUN
+private alias 5 : ACTION_BOUNCE
+private alias 6 : ACTION_JUMP
+private alias 7 : ACTION_BOUNCE_FLAIL
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	if object.timer > 0
+		switch object.propertyValue
+			case ACTION_BOUNCE_FLAIL
+			case ACTION_BOUNCE
+			case ACTION_JUMP
+				foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+					player[currentPlayer].yvel = -0xA0000
+					player[currentPlayer].state = Player_State_Air
+				next
+				object.timer --
+				break
+				
+			case ACTION_WALK
+			case ACTION_RUN
+				foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+					temp1 = screen.xcenter
+					temp1 -= 0
+					if player[0].ixpos > temp1
+						player[currentPlayer].controlMode = 0
+						player[currentPlayer].right = 0
+						object.timer = 0
+						stage.curXBoundary1 = 0x30
+					else
+						player[currentPlayer].controlMode = CONTROLMODE_NONE
+						player[currentPlayer].right = 1
+						camera[0].xpos = object.cameraxLock
+					end if
+				next
+				break
+		end switch
+	end if
+end event
+
+
+event ObjectDraw
+end event
+
+
+event ObjectStartup
+	if lampPostID == 0
+		if stage.playerListPos == PLAYER_KNUCKLES_A
+			foreach(TypeName[Starting Action], arrayPos0, ALL_ENTITIES)
+				object[arrayPos0].propertyValue &= 0b11110000
+				object[arrayPos0].propertyValue >>= 4
+			next
+		end if
+		
+		foreach(TypeName[Starting Action], arrayPos0, ALL_ENTITIES)
+			object[arrayPos0].priority = PRIORITY_ACTIVE
+			
+			switch object[arrayPos0].propertyValue
+				case ACTION_NOTHING
+					// Nothing..
+					break
+				case ACTION_FALL
+					foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+						player[currentPlayer].prevAnimation = ANI_HURT
+						player[currentPlayer].animation = ANI_HURT
+						player[currentPlayer].animationReserve = ANI_HURT
+					next
+					break
+				case ACTION_FALL_ROLL
+					foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+						player[currentPlayer].prevAnimation = ANI_JUMPING
+						player[currentPlayer].animation = ANI_JUMPING
+						player[currentPlayer].animationReserve = ANI_JUMPING
+					next
+					break
+				case ACTION_WALK
+					foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+						player[currentPlayer].controlMode = CONTROLMODE_NONE
+						player[currentPlayer].speed = 0x20000
+					next
+					
+					object[arrayPos0].timer = 90
+					object[arrayPos0].cameraxLock = object[0].ixpos
+					object[arrayPos0].cameraxLock += 0x100
+					break
+				case ACTION_RUN
+					foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+						player[currentPlayer].controlMode = CONTROLMODE_NONE
+						player[currentPlayer].speed = 0x60000
+					next
+					
+					object[arrayPos0].timer = 90
+					object[arrayPos0].cameraxLock = object[0].ixpos
+					object[arrayPos0].cameraxLock += 0x100
+					break
+				case ACTION_JUMP
+					foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+						player[currentPlayer].prevAnimation = ANI_JUMPING
+						player[currentPlayer].animation = ANI_JUMPING
+					next
+					object[arrayPos0].timer = 2
+					break
+				case ACTION_BOUNCE
+					foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+						player[currentPlayer].prevAnimation = ANI_BOUNCING
+						player[currentPlayer].animation = ANI_BOUNCING
+					next
+					object[arrayPos0].timer = 2
+					break
+				case ACTION_BOUNCE_FLAIL
+					foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+						player[currentPlayer].prevAnimation = ANI_HURT
+						player[currentPlayer].animation = ANI_HURT
+						player[currentPlayer].animationReserve = ANI_HURT
+					next
+					object[arrayPos0].timer = 2
+					break
+			end switch
+		next
+	end if
+end event

@@ -1,0 +1,127 @@
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: Generic Platform Object
+// Script Author: De Gezonde Roker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.prevXpos
+private alias object.value1 : object.prevYpos
+private alias object.value2 : object.stoodPlayers
+private alias object.value3 : object.collidingPlayers
+private alias object.value4 : object.killPlayers
+
+private alias object.ixpos : player.ixpos
+private alias object.xpos : player.xpos
+private alias object.ypos : player.ypos
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	temp7 = object.prevXpos
+	temp7 &= 0xFFFF0000
+	temp5 = object.xpos
+	temp5 &= 0xFFFF0000
+	temp5 -= temp7
+	
+	temp7 = object.prevYpos
+	temp7 &= 0xFFFF0000
+	temp6 = object.ypos
+	temp6 &= 0xFFFF0000
+	temp6 -= temp7
+	
+	foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+		GetBit(temp2, object.stoodPlayers, currentPlayer)
+		if temp2 == true
+			player[currentPlayer].xpos += temp5
+			player[currentPlayer].ypos += temp6
+		end if
+		
+		GetBit(temp2, object.collidingPlayers, currentPlayer)
+		if temp2 == true
+			if object.propertyValue == 1
+				BoxCollisionTest(C_TOUCH, object.entityPos, -30, -30, 30, 30, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+			else
+				BoxCollisionTest(C_TOUCH, object.entityPos, -14, -14, 14, 14, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+			end if
+			if checkResult == true
+				GetBit(temp2, object.killPlayers, currentPlayer)
+				if temp2 == true
+					CallFunction(Player_Kill)						// The player has been inside of the block for two frames, so kill them
+				end if
+				SetBit(object.killPlayers, currentPlayer, true)		// The player is inside of the block. If they still are on the next frame, kill them
+			else
+				SetBit(object.killPlayers, currentPlayer, false)
+			end if
+		end if
+		
+		SetBit(object.collidingPlayers, currentPlayer, false)
+		SetBit(object.stoodPlayers, currentPlayer, false)
+		
+		if object.propertyValue == 1
+			BoxCollisionTest(C_SOLID, object.entityPos, -32, -32, 32, 32, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+		else
+			BoxCollisionTest(C_SOLID, object.entityPos, -16, -16, 16, 16, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+		end if
+		if checkResult != false
+			SetBit(object.collidingPlayers, currentPlayer, true)
+		end if
+		if checkResult == COL_TOP
+			SetBit(object.stoodPlayers, currentPlayer, true)
+		end if
+		if checkResult == COL_BOTTOM
+			GetBit(temp2, object.killPlayers, currentPlayer)
+			if temp2 == true
+				temp0 = object[currentPlayer].ixpos
+				temp0 -= object.ixpos
+				temp1 = temp0
+				Abs(temp0)
+				if object.propertyValue == 1
+					if temp0 > 32
+						checkResult = true
+					end if
+				else
+					if temp0 > 16
+						checkResult = true
+					end if
+				end if
+				if checkResult == true
+					player[currentPlayer].ixpos = object.ixpos
+					if object.propertyValue == 1
+						temp2 = 32
+					else
+						temp2 = 16
+					end if
+					temp2 += 10
+					player[currentPlayer].ixpos = object.ixpos
+					if temp1 > 0
+						player[currentPlayer].ixpos += temp2
+					else
+						player[currentPlayer].ixpos -= temp2
+					end if
+				end if
+			end if
+		end if
+	next
+	
+	object.prevXpos = object.xpos
+	object.prevYpos = object.ypos
+end event
+
+
+event ObjectDraw
+	DrawSprite(object.propertyValue)
+end event
+
+
+event ObjectStartup
+	// Please change the sprites for these, the default ones included here are absolutely hideous
+	LoadSpriteSheet("Toolkit/Objects.gif")
+	SpriteFrame(-16, -16, 32, 32, 1, 176)		// Small block
+	SpriteFrame(-32, -32, 64, 64, 1, 176)		// Large block
+end event
