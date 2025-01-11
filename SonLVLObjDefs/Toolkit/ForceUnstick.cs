@@ -20,7 +20,7 @@ namespace ToolkitDefs.Global
 			properties[0] = new PropertySpec("Width", typeof(int), "Extended",
 				"How wide the object will be.", null,
 				(obj) => (obj.PropertyValue >> 4) + 1,
-				(obj, value) => obj.PropertyValue = (byte)((obj.PropertyValue & ~0xf0) | (Math.Min(Math.Max((int)value - 1, 0), 15) << 4))); // could've sworn a Math had a Clamp function.. but ig it doesn't?
+				(obj, value) => obj.PropertyValue = (byte)((obj.PropertyValue & ~0xf0) | (Math.Min(Math.Max((int)value - 1, 0), 15) << 4)));
 			
 			properties[1] = new PropertySpec("Height", typeof(int), "Extended",
 				"How tall the object will be.", null,

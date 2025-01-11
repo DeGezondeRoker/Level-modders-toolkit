@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ObjDef xmlns="http://www.sonicretro.org" Image="startingaction">
+  <Images>
+    <ImageFromSheet id="startingaction" sheet="Toolkit/SonLVL.gif" sourcex="28" sourcey="34" width="16" height="16">
+      <Offset X="-8" Y="-8" />
+    </ImageFromSheet>
+    <ImageFromSheet id="walking" sheet="Toolkit/SonLVL.gif" sourcex="1" sourcey="75" width="36" height="39">
+      <Offset X="-18" Y="-20" />
+    </ImageFromSheet>
+    <ImageFromSheet id="running" sheet="Toolkit/SonLVL.gif" sourcex="1" sourcey="115" width="31" height="36">
+      <Offset X="-16" Y="-18" />
+    </ImageFromSheet>
+    <ImageFromSheet id="bouncing" sheet="Toolkit/SonLVL.gif" sourcex="38" sourcey="69" width="24" height="45">
+      <Offset X="-12" Y="-23" />
+    </ImageFromSheet>
+    <ImageFromSheet id="rolling" sheet="Toolkit/SonLVL.gif" sourcex="33" sourcey="115" width="32" height="32">
+      <Offset X="-16" Y="-16" />
+    </ImageFromSheet>
+    <ImageFromSheet id="flailing" sheet="Toolkit/SonLVL.gif" sourcex="1" sourcey="152" width="40" height="28">
+      <Offset X="-20" Y="-14" />
+    </ImageFromSheet>
+  </Images>
+  <Subtypes>
+    <Subtype id="00" name="Do Nothing" image="startingaction" />
+    <Subtype id="01" name="Fall, Flailing" image="flailing" />
+    <Subtype id="02" name="Fall, Rolling" image="rolling" />
+    <Subtype id="03" name="Enter screen, Walking" image="walking" />
+    <Subtype id="04" name="Enter screen, Running" image="running" />
+    <Subtype id="05" name="Jump, Bouncing" image="bouncing" />
+    <Subtype id="06" name="Jump, Rolling" image="rolling" />
+    <Subtype id="07" name="Jump, Flailing" image="flailing" />
+  </Subtypes>
+</ObjDef>

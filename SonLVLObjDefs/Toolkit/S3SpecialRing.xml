@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ObjDef xmlns="http://www.sonicretro.org" Image="specialring">
+  <Images>
+    <ImageFromSheet id="specialring" sheet="Toolkit/Objects2.gif" sourcex="83" sourcey="1" width="64" height="64">
+      <Offset X="-32" Y="-32" />
+    </ImageFromSheet>
+  </Images>
+  <Properties>
+    <Property name="Ring ID" description="The ID of this Special Ring. Every Special Ring should have a unique ID. Used to keep track of collected rings. Cannot go beyond 127." type="int" startbit="0" length="4" />
+  </Properties>
+</ObjDef>

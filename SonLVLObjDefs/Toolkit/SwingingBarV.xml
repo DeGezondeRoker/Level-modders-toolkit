@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ObjDef xmlns="http://www.sonicretro.org" Image="swingingbarv">
+  <Images>
+    <ImageFromSheet id="swingingbarv" sheet="Toolkit/Objects.gif" sourcex="66" sourcey="191" width="8" height="64">
+      <Offset X="-4" Y="-32" />
+    </ImageFromSheet>
+  </Images>
+</ObjDef>

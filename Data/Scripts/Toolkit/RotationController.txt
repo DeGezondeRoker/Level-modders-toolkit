@@ -41,8 +41,6 @@ event ObjectUpdate
 			CheckNotEqual(object[arrayPos0].yvel, 0)
 			temp4 |= checkResult
 			if checkResult == true
-		
-			player.score = 69
 				SetBit(object.attachedObjects, temp7, false)		// Detach objects if their velocity is not zero (particularly important for rings that are attracted to the player)
 			else
 				temp0 = object.rotation

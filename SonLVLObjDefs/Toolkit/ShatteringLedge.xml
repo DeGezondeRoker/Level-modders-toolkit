@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ObjDef xmlns="http://www.sonicretro.org" Image="shatteringledge">
+  <Images>
+    <ImageFromSheet id="shatteringledge" sheet="Toolkit/Objects.gif" sourcex="112" sourcey="59" width="64" height="32">
+      <Offset X="-32" Y="-16" />
+    </ImageFromSheet>
+    <ImageFromSheet id="shatteringledge2" sheet="Toolkit/Objects.gif" sourcex="112" sourcey="59" width="64" height="32">
+      <Offset X="32" Y="-16" />
+    </ImageFromSheet>
+  </Images>
+  <Properties>
+    <Property name="Delay" description="Where the Spring will be facing." type="int" startbit="0" length="6" />
+    <Property name="Respawns" description="If the Spring should only be usable when the player is in the air already." type="bool" startbit="6" length="1" />
+    <Property name="Size" description="If this Spring should trigger the Twirling animation, upon launch." type="sizes" startbit="7" length="1" />
+  </Properties>
+  <ImageSets>
+    <ImageSet id="shatteringledgelarge">
+      <ImageRef image="shatteringledge" />
+      <ImageRef image="shatteringledge2" />
+    </ImageSet>
+  </ImageSets>
+  <DefaultImage>
+    <ImageRef image="shatteringledge" />
+  </DefaultImage>
+  <Display>
+    <DisplayOption>
+      <Condition property="Size" value="Double" />
+      <ImageSetRef set="shatteringledgelarge" />
+    </DisplayOption>
+  </Display>
+  <Enums>
+	<Enum name="sizes">
+      <EnumMember name="Single" />
+      <EnumMember name="Double" />
+    </Enum>
+  </Enums>
+</ObjDef>

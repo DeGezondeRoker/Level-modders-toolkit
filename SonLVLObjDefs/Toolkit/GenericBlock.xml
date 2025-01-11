@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ObjDef xmlns="http://www.sonicretro.org">
+  <Images>
+    <ImageFromSheet id="smallblock" sheet="Toolkit/Objects.gif" sourcex="1" sourcey="176" width="32" height="32">
+      <Offset X="-16" Y="-16" />
+    </ImageFromSheet>
+    <ImageFromSheet id="largeblock" sheet="Toolkit/Objects.gif" sourcex="1" sourcey="176" width="64" height="64">
+      <Offset X="-32" Y="-32" />
+    </ImageFromSheet>
+  </Images>
+  <Subtypes>
+    <Subtype id="00" name="Small Block" image="smallblock" />
+    <Subtype id="01" name="Large Block" image="largeblock" />
+  </Subtypes>
+</ObjDef>

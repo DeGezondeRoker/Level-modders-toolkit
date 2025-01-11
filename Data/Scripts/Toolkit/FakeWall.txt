@@ -1,0 +1,106 @@
+// ========================
+// Config
+// ========================
+
+// These values are the same as you would use in a SpriteFrame() functions. Collision size is automatically determined based on this
+private value SpriteXPos = 75
+private value SpriteYPos = 175
+private value SpriteWidth = 128
+private value SpriteHeight = 80
+
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: Water Object
+// Script Author: De Gezonde Roker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.width
+private alias object.value1 : object.height
+
+private alias object.value2 : object.spriteWidth
+
+public value RevealWall = 0
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	if RevealWall == 1
+		RevealWall = 0
+	end if
+	
+	if RevealWall == 0
+		temp0 = object.width
+		FlipSign(temp0)
+		temp1 = object.height
+		FlipSign(temp1)
+		temp1 += 16
+		
+		foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+			BoxCollisionTest(C_TOUCH, object.entityPos, temp0, temp1, object.width, object.height, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+			if checkResult == true
+				RevealWall = 2
+			end if
+		next
+	end if
+end event
+
+
+event ObjectDraw
+	if RevealWall == 0
+		DrawSprite(0)
+	else
+		temp7 = 1
+		while temp7 < object.width
+			DrawSprite(temp7)
+			temp7++
+		loop
+	
+		RevealWall = 1
+	end if
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Toolkit/Objects.gif")
+	
+	temp0 = SpriteXPos
+	temp1 = SpriteYPos
+	temp2 = SpriteWidth
+	temp3 = SpriteHeight
+	
+	temp4 = temp2		// Offset horizontal (done automatically)
+	temp4 /= -2
+	temp5 = temp3		// Offset vertical (done automatically)
+	temp5 /= -2
+	
+	temp6 = temp2
+	temp6 /= 2
+	
+	temp6 ++
+	
+	temp7 = 0
+	
+	SpriteFrame(temp4, temp5, temp2, temp3, temp0, temp1)
+	while temp7 < temp6
+		SpriteFrame(temp4, temp5, 1, temp3, temp0, temp1)
+		temp4 += 2
+		temp0 += 2
+		temp7++
+	loop
+	
+	foreach(TypeName[Fake Wall], arraypos0, ALL_ENTITIES)
+		object[arraypos0].width = temp2
+		object[arraypos0].width /= 2
+		object[arraypos0].height = temp3
+		object[arraypos0].height /= 2
+		object[arraypos0].spriteWidth = temp6
+		object[arraypos0].drawOrder = 5
+	next
+	
+end event

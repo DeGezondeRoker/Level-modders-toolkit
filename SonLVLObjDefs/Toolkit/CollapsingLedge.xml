@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ObjDef xmlns="http://www.sonicretro.org" Image="shatteringledge">
+  <Images>
+    <ImageFromSheet id="collapsingledge" sheet="Toolkit/Objects.gif" sourcex="112" sourcey="59" width="64" height="32">
+      <Offset X="-32" Y="-16" />
+    </ImageFromSheet>
+  </Images>
+  <Properties>
+    <Property name="Delay" description="Where the Spring will be facing." type="int" startbit="0" length="6" />
+    <Property name="Respawns" description="If the Spring should only be usable when the player is in the air already." type="bool" startbit="6" length="1" />
+    <Property name="Collapse Type" description="If this Spring should trigger the Twirling animation, upon launch." type="ctypes" startbit="7" length="1" />
+  </Properties>
+  <DefaultImage>
+    <ImageRef image="collapsingledge" />
+  </DefaultImage>
+  <Enums>
+	<Enum name="ctypes">
+      <EnumMember name="Left / Right" />
+      <EnumMember name="Centre" />
+    </Enum>
+  </Enums>
+</ObjDef>

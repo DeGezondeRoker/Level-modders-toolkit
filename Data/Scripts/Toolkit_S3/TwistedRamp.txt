@@ -33,7 +33,7 @@ event ObjectUpdate
 						if player[currentPlayer].xvel > -0x40000
 							checkResult = false
 						else
-							player[currentPlayer].xvel -= 0x58000
+							player[currentPlayer].xvel -= 0x40000
 						end if
 					else
 						checkResult = false
@@ -43,7 +43,7 @@ event ObjectUpdate
 						if player[currentPlayer].xvel < 0x40000
 							checkResult = false
 						else
-							player[currentPlayer].xvel += 0x58000
+							player[currentPlayer].xvel += 0x40000
 						end if
 					else
 						checkResult = false

@@ -1,0 +1,279 @@
+// ========================
+// Config
+// ========================
+
+// These values are the same as you would use in a SpriteFrame() functions. Collision size is automatically determined based on this
+// Dimensions MUST be divisible by 16. If your platform is a different size, simply add empty space to pad the dimensions and change the collision offsets below accordingly.
+private value SpriteXPos = 112
+private value SpriteYPos = 59
+private value SpriteWidth = 64
+private value SpriteHeight = 32
+
+// How far from the edges collision starts. E.g. 8 means the collision is shortened by 8 both left and right. Can at most be 16.
+private value SpriteCollisionXOffset = 0
+// How far down the collision starts. E.g. 16 means the top-most tile is not solid, but the second tile from above is
+private value SpriteCollisionYOffset = 0
+
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: Collapsing Ledge Object
+// Script Author: De Gezonde Roker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.width
+private alias object.value1 : object.height
+
+private alias object.value2 : object.spriteWidth
+private alias object.value3 : object.spriteHeight
+
+private alias object.value4 : object.timer
+private alias object.value5 : object.collapsed
+
+private alias object.value6 : object.collisionOffset
+
+private alias object.value7 : object.collapseDelay
+private alias object.value8 : object.collapseType
+private alias object.value9 : object.respawn
+
+private alias object.value46 : temp8
+private alias object.value47 : temp9
+
+private alias 0 : COLLAPSING_LEDGE_PLATFORM
+private alias 1 : COLLAPSING_LEDGE_TILE
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	switch object.state
+	
+	case COLLAPSING_LEDGE_PLATFORM
+		if object.collapsed == false
+			temp0 = object.width
+			FlipSign(temp0)
+			temp0 += SpriteCollisionXOffset
+			
+			temp2 = object.width
+			temp2 -= SpriteCollisionXOffset
+			
+			temp1 = object.height
+			FlipSign(temp1)
+			temp1 /= 2
+			temp1 += SpriteCollisionYOffset
+			
+			temp3 = temp1
+			temp3 += 16
+			
+			foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+				BoxCollisionTest(C_PLATFORM, object.entityPos, temp0, temp1, temp2, temp3, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+				if checkResult == true
+					if object.timer == 0
+						object.timer = 1
+					end if
+				end if
+			next
+		
+			if object.timer > 0
+				object.timer++
+				if object.timer > object.collapseDelay
+					object.collapsed = true
+					object.priority = PRIORITY_ACTIVE
+					
+					// The delay of each tile falling
+					if object.collapseType == 0
+						if object.direction == FLIP_X
+							temp3 = object.spriteWidth
+							temp3 *= 4
+						else
+							temp3 = 0						
+						end if
+					else
+						temp3 = object.spriteWidth
+						temp3 *= 2
+					end if
+					
+					temp5 = 1						// Keeps track of the frame of the tiles
+					temp6 = object.spriteWidth
+					temp7 = 0
+					while temp7 < temp6
+						temp4 = object.spriteHeight		// The delay of each tile falling
+						FlipSign(temp4)
+						temp9 = 0
+						temp8 = object.spriteHeight
+						while temp9 < temp8
+							CreateTempObject(object.type, 0, object.xpos, object.ypos)
+							object[tempObjectPos].frame = temp5
+							object[tempObjectPos].state = COLLAPSING_LEDGE_TILE
+							object[tempObjectPos].timer = temp3
+							object[tempObjectPos].timer -= temp4
+							object[tempObjectPos].timer *= 2
+							
+							if temp9 == 0
+								object[tempObjectPos].collisionOffset = temp7
+								object[tempObjectPos].width = object.width
+								object[tempObjectPos].height = object.height
+								object[tempObjectPos].spriteWidth = object.spriteWidth
+								object[tempObjectPos].spriteWidth -= 1
+							end if
+							if object.collapseType == 0
+								temp4 += 2
+							else
+								temp4 += 4
+							end if
+							temp5++
+							temp9++
+						loop
+						if object.collapseType == 0
+							temp4 = 4
+							if object.direction == FLIP_X
+								FlipSign(temp4)
+							end if
+							temp3 += temp4
+						else
+							temp4 = temp6
+							temp4 /= 2
+							temp4 -= 1
+							if temp7 == temp4
+								temp3 += 1
+							else
+								if temp7 < temp4
+									temp3 += 2
+								else
+									temp3 -= 2
+								end if
+							end if
+						end if
+						temp7++
+					loop
+				end if
+			end if
+		else
+			if object.respawn == false
+				object.type = TypeName[Blank Object]
+			else
+				if object.outOfBounds == true
+					object.timer = 0
+					object.collapsed = false
+					object.priority = PRIORITY_BOUNDS
+				end if
+			end if
+		end if
+		break
+	case COLLAPSING_LEDGE_TILE
+		if object.timer > 0
+			object.timer--
+			
+			if object.width != 0
+				temp0 = object.width
+				FlipSign(temp0)
+				temp1 = object.collisionOffset
+				temp1 *= 16
+				temp0 += temp1
+				temp2 = temp0
+				temp2 += 16
+				
+				if object.collisionOffset == 0
+					temp0 += SpriteCollisionXOffset
+				end if
+				if object.collisionOffset == object.spriteWidth
+					temp2 -= SpriteCollisionXOffset
+				end if
+				
+				temp1 = object.height
+				FlipSign(temp1)
+				temp1 /= 2
+				temp1 += SpriteCollisionYOffset
+				temp3 = temp1
+				temp3 += 16
+				
+				foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+					BoxCollisionTest(C_PLATFORM, object.entityPos, temp0, temp1, temp2, temp3, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+				next
+			end if
+		else
+			object.yvel += 0x4000
+			object.ypos += object.yvel
+		end if
+		if object.outOfBounds == true
+			object.type = TypeName[Blank Object]
+		end if
+		break
+	end switch
+end event
+
+
+event ObjectDraw
+	switch object.state
+	
+	case COLLAPSING_LEDGE_PLATFORM
+		if object.collapsed == false
+			DrawSprite(0)
+		end if
+		break
+	case COLLAPSING_LEDGE_TILE
+		DrawSprite(object.frame)
+		break
+	end switch
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Toolkit/Objects.gif")
+	
+	temp0 = SpriteXPos
+	temp1 = SpriteYPos
+	temp2 = SpriteWidth
+	temp3 = SpriteHeight
+	
+	temp4 = temp2		// Offset horizontal (done automatically)
+	temp4 /= -2
+	temp5 = temp3		// Offset vertical (done automatically)
+	temp5 /= -2
+	
+	temp7 = 0
+	
+	SpriteFrame(temp4, temp5, temp2, temp3, temp0, temp1)
+	while temp7 < temp2
+		temp6 = 0
+		temp8 = temp1
+		temp9 = temp5
+		
+		while temp6 < temp3
+			SpriteFrame(temp4, temp9, 16, 16, temp0, temp8)
+			temp9 += 16
+			temp8 += 16
+			temp6 += 16
+		loop
+		
+		temp4 += 16
+		temp0 += 16
+		temp7 += 16
+	loop
+	
+	foreach(TypeName[Collapsing Ledge], arraypos0, ALL_ENTITIES)
+		object[arraypos0].spriteWidth = temp2
+		object[arraypos0].spriteWidth /= 16
+		object[arraypos0].spriteHeight = temp3
+		object[arraypos0].spriteHeight /= 16
+		object[arraypos0].width = temp2
+		object[arraypos0].width /= 2
+		object[arraypos0].height = temp3
+		
+		object[arraypos0].collapseType = object[arraypos0].propertyValue
+		object[arraypos0].collapseType &= 0b10000000
+		object[arraypos0].collapseType >>= 7
+		
+		object[arraypos0].respawn = object[arraypos0].propertyValue
+		object[arraypos0].respawn &= 0b01000000
+		object[arraypos0].respawn >>= 6
+		
+		object[arraypos0].collapseDelay = object[arraypos0].propertyValue
+		object[arraypos0].collapseDelay &= 0b00111111
+	next
+	
+end event

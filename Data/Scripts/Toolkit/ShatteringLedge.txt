@@ -1,0 +1,294 @@
+// ========================
+// Config
+// ========================
+
+// Higher accuracy reduces the number of sprite frames used by not drawing every individual pixel of the original sprite, and instead drawing the same pixel multiple times
+// For smaller objects an accuracy of 1 is recommended, but for larger ones, like this platform, up to 4 looks just as good and it cuts the amount frames used by a very significant amount
+// To put things into a perspective, a 64x32 platform has 2048 pixels! That is already half of the SpriteFrame() limit. With an accuracy of 4 however, this reduces to 128 frames, which is very reasonable
+private value Accuracy = 1
+
+// These values are the same as you would use in a SpriteFrame() functions. Collision size is automatically determined based on this
+private value SpriteXPos = 112
+private value SpriteYPos = 59
+private value SpriteWidth = 64
+private value SpriteHeight = 32
+
+// How far down the collision starts vertically. So 1 means the top-most tile is not solid, but the second tile from above is
+private value SpriteCollisionOffset = 0
+
+// ----------------------------------
+// RSDK Project: Sonic 1 / 2
+// Script Description: Shattering Ledge Object
+// Script Author: De Gezonde Roker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.width
+private alias object.value1 : object.height
+
+private alias object.value2 : object.spriteWidth
+private alias object.value3 : object.spriteHeight
+
+private alias object.value4 : object.timer
+private alias object.value5 : object.shatterTimer
+private alias object.value6 : object.gravity
+
+private alias object.value7 : object.shatterDelay
+private alias object.value8 : object.size
+private alias object.value9 : object.respawn
+
+private alias object.value46 : temp8
+private alias object.value47 : temp9
+
+public table ShatteringLedge_XOffsets
+	1303,   420, -1572,  1871,  -455,  -177,  1316,  -669, -1565,
+	1805, -1129,  -988,   441,   991,  1363, -2030, -1313,  1375,
+	-868,  -550,  -473, -1776, -1529,   696, -1814,  1437,  -200,
+	-702, -1038,  1271,   843, -1384,   346,   273,   163,  1586,
+	2005,   627,   860, -1036, -1379,  1223,   624, -1447,  -781,
+	-207, -1108,  1015,   539,  1424,   349
+end table
+
+public table ShatteringLedge_YOffsets
+	-809, -1129, -2014, -1539,  -780, -1632,  -864,  -508,   633,
+	1644, -1908,   620,   937,  -894,  -789,  -772,   480,  2020,
+	1079, -1225,  -586,  -923,   724,  1061, -1551,   782,  1043,
+	577,  1159, -1952,   887,  -782,   564,  -128,  1908,   673,
+	-992, -1993,   845,  2036,  1692,   239,   381
+end table
+
+public table ShatteringLedge_LifeSpans
+	2390, 1471, 2260, 1606, 1847, 2372, 2079, 1116,  947,  897, 1570,
+	2295, 2010, 1352, 1597, 2338,  983, 1998, 1906, 2242, 1416, 2306,
+	1895, 1639, 1955,  934, 2356, 1605,  945, 1357, 1567, 1590, 1412,
+	1584, 2074, 1715, 1909, 1615, 1373, 1973, 1424,  953, 1217, 2331,
+	869
+end table
+
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	if object.timer > 0
+		temp0 = object.shatterDelay
+		temp0 += 0x40
+		if object.timer > temp0
+			if object.respawn == false
+				object.type = TypeName[Blank Object]
+			else
+				object.shatterTimer = -1
+				if object.outOfBounds == true
+					object.timer = 0
+					object.shatterTimer = 0
+					object.gravity = 0
+					object.priority = PRIORITY_BOUNDS
+				end if
+			end if
+		else
+			object.timer++
+			if object.timer > object.shatterDelay
+				object.xvel = 1
+				object.yvel = 1
+				object.shatterTimer += 48
+				temp1 = object.shatterTimer
+				temp1 >>= 8
+				object.shatterTimer -= temp1
+				object.gravity += 80000
+			end if
+		end if
+	end if
+		
+	if object.shatterTimer == 0
+		temp0 = object.width
+		FlipSign(temp0)
+		temp1 = object.height
+		FlipSign(temp1)
+		temp1 /= 2
+		temp3 = SpriteCollisionOffset
+		temp3 *= 16
+		temp1 += temp3
+		
+		temp2 = object.width
+		temp3 = temp1
+		temp3 += 16
+		
+		if object.size == 1
+			temp2 *= 3
+		end if
+		
+		foreach (GROUP_PLAYERS, currentPlayer, ACTIVE_ENTITIES)
+			BoxCollisionTest(C_PLATFORM, object.entityPos, temp0, temp1, temp2, 16, currentPlayer, C_BOX, C_BOX, C_BOX, C_BOX)
+			if checkResult == true
+				if object.timer == 0
+					object.timer = 1
+					object.priority = PRIORITY_ACTIVE
+				end if
+			end if
+		next
+	end if
+end event
+
+
+event ObjectDraw
+	if object.shatterTimer == 0
+		DrawSprite(0)
+		if object.size == 1
+			temp0 = object.xpos
+			temp0 += 0x400000
+			DrawSpriteXY(0, temp0, object.ypos)
+		end if
+	else
+		if object.shatterTimer != -1
+			temp7 = 1
+			temp8 = 0
+			temp3 = Accuracy
+			temp3 *= Accuracy
+			temp6 = object.spriteWidth
+			temp6 *= object.spriteHeight
+			while temp7 < temp6
+				temp4 = 0
+				while temp4 < temp3
+					temp5 = temp8
+					temp5 %= 45
+					GetTableValue(temp2, temp5, ShatteringLedge_LifeSpans)
+					if object.shatterTimer < temp2
+						temp0 = object.xpos
+						temp1 = object.ypos
+						
+						temp5 = temp8
+						temp5 %= 51
+						GetTableValue(temp2, temp5, ShatteringLedge_XOffsets)
+						temp2 *= object.shatterTimer
+						temp0 += temp2
+						temp2 = temp4
+						temp2 %= Accuracy
+						temp2 <<= 16
+						temp0 += temp2
+						
+						temp5 = temp8
+						temp5 %= 43
+						GetTableValue(temp2, temp5, ShatteringLedge_YOffsets)
+						temp2 *= object.shatterTimer
+						temp1 += temp2
+						temp1 += object.gravity
+						temp2 = temp4
+						temp2 /= Accuracy
+						temp2 %= Accuracy
+						temp2 <<= 16
+						temp1 += temp2
+						
+						DrawSpriteXY(temp7, temp0, temp1)
+					end if
+					temp4++
+					temp8++
+				loop
+				temp7++
+			loop
+			if object.size == 1
+				object.xpos += 0x400000
+				temp7 = 1
+				while temp7 < temp6
+					temp4 = 0
+					while temp4 < temp3
+						temp5 = temp8
+						temp5 %= 45
+						GetTableValue(temp2, temp5, ShatteringLedge_LifeSpans)
+						if object.shatterTimer < temp2
+							temp0 = object.xpos
+							temp1 = object.ypos
+							
+							temp5 = temp8
+							temp5 %= 51
+							GetTableValue(temp2, temp5, ShatteringLedge_XOffsets)
+							temp2 *= object.shatterTimer
+							temp0 += temp2
+							temp2 = temp4
+							temp2 %= Accuracy
+							temp2 <<= 16
+							temp0 += temp2
+							
+							temp5 = temp8
+							temp5 %= 43
+							GetTableValue(temp2, temp5, ShatteringLedge_YOffsets)
+							temp2 *= object.shatterTimer
+							temp1 += temp2
+							temp1 += object.gravity
+							temp2 = temp4
+							temp2 /= Accuracy
+							temp2 %= Accuracy
+							temp2 <<= 16
+							temp1 += temp2
+							
+							DrawSpriteXY(temp7, temp0, temp1)
+						end if
+						temp4++
+						temp8++
+					loop
+					temp7++
+				loop
+				object.xpos -= 0x400000
+			end if
+		end if
+	end if
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Toolkit/Objects.gif")
+	
+	temp0 = SpriteXPos
+	temp1 = SpriteYPos
+	temp2 = SpriteWidth
+	temp3 = SpriteHeight
+	
+	temp4 = temp2		// Offset horizontal (done automatically)
+	temp4 /= -2
+	temp5 = temp3		// Offset vertical (done automatically)
+	temp5 /= -2
+	
+	temp7 = 0
+	
+	SpriteFrame(temp4, temp5, temp2, temp3, temp0, temp1)
+	while temp7 < temp2
+		temp6 = 0
+		temp8 = temp1
+		temp9 = temp5
+		
+		while temp6 < temp3
+			SpriteFrame(temp4, temp9, 1, 1, temp0, temp8)
+			temp9 += Accuracy
+			temp8 += Accuracy
+			temp6 += Accuracy
+		loop
+		
+		temp4 += Accuracy
+		temp0 += Accuracy
+		temp7 += Accuracy
+	loop
+	
+	foreach(TypeName[Shattering Ledge], arraypos0, ALL_ENTITIES)
+		object[arraypos0].spriteWidth = temp2
+		object[arraypos0].spriteWidth /= Accuracy
+		object[arraypos0].spriteHeight = temp3
+		object[arraypos0].spriteHeight /= Accuracy
+		object[arraypos0].width = temp2
+		object[arraypos0].width /= 2
+		object[arraypos0].height = temp3
+		
+		object[arraypos0].size = object[arraypos0].propertyValue
+		object[arraypos0].size &= 0b10000000
+		object[arraypos0].size >>= 7
+		
+		object[arraypos0].respawn = object[arraypos0].propertyValue
+		object[arraypos0].respawn &= 0b01000000
+		
+		object[arraypos0].shatterDelay = object[arraypos0].propertyValue
+		object[arraypos0].shatterDelay &= 0b00111111
+	next
+	
+end event
